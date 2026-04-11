@@ -1,0 +1,104 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "E-Commerce Microservices API",
+    "version": "1.0.0",
+    "description": "Dokumentasi API terpusat untuk sistem Microservice E-Commerce (Product & Order Services)."
+  },
+  "servers": [
+    {
+      "url": "[http://127.0.0.1:3000](http://127.0.0.1:3000)",
+      "description": "API Gateway Server"
+    }
+  ],
+  "paths": {
+    "/api/products": {
+      "get": {
+        "summary": "Mendapatkan semua produk",
+        "responses": {
+          "200": { "description": "Daftar produk berhasil diambil" }
+        }
+      },
+      "post": {
+        "summary": "Menambahkan produk baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "Laptop Gaming" },
+                  "price": { "type": "number", "example": 15000000 },
+                  "stock": { "type": "number", "example": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Produk berhasil ditambahkan" }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "put": {
+        "summary": "Memperbarui produk berdasarkan ID",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "price": { "type": "number" },
+                  "stock": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Produk berhasil diperbarui" } }
+      },
+      "delete": {
+        "summary": "Menghapus produk berdasarkan ID",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Produk berhasil dihapus" } }
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "summary": "Mendapatkan semua pesanan",
+        "responses": { "200": { "description": "Daftar pesanan berhasil diambil" } }
+      },
+      "post": {
+        "summary": "Membuat pesanan baru",
+        "description": "Layanan ini akan secara internal memeriksa ketersediaan stok di Product Service.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productId": { "type": "string", "example": "64abcd1234567890" },
+                  "quantity": { "type": "number", "example": 2 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pesanan berhasil dibuat" },
+          "400": { "description": "Stok tidak mencukupi atau produk tidak ditemukan" }
+        }
+      }
+    }
+  }
+}

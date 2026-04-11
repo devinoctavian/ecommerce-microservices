@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Microservices Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        h1, h2 { color: #333; }
+        .container { display: flex; gap: 20px; }
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 50%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        button { background-color: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        button:hover { background-color: #218838; }
+        form { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 15px; }
+        input { padding: 5px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>E-Commerce Dashboard</h1>
+    <p>Terhubung melalui API Gateway (Port 3000)</p>
+
+    <div class="container">
+        <!-- Section Product -->
+        <div class="box">
+            <h2>Katalog Produk</h2>
+            <form id="addProductForm">
+                <h3>Tambah Produk (Admin)</h3>
+                <input type="text" id="pName" placeholder="Nama Produk" required>
+                <input type="number" id="pPrice" placeholder="Harga" required>
+                <input type="number" id="pStock" placeholder="Stok" required>
+                <button type="submit" style="background-color: #007bff;">Tambah</button>
+            </form>
+
+            <table id="productsTable">
+                <thead>
+                    <tr>
+                        <th>Nama</th>
+                        <th>Harga</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data Produk akan diisi oleh JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section Order -->
+        <div class="box">
+            <h2>Riwayat Pesanan</h2>
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>ID Pesanan</th>
+                        <th>Produk</th>
+                        <th>Qty</th>
+                        <th>Total Harga</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data Pesanan akan diisi oleh JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
