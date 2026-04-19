@@ -20,22 +20,28 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Konfigurasi Proxy untuk Product Service (berjalan di port 3001)
 // Catatan: Kita tidak menggunakan express.json() di Gateway agar proxy bisa meneruskan body raw dengan benar
-app.use('/api/products', createProxyMiddleware({ 
-    target: '[http://127.0.0.1:3001](http://127.0.0.1:3001)', 
+app.use(createProxyMiddleware({ 
+    pathFilter: '/api/products', // <--- Penanda rute di versi terbaru
+    target: 'http://127.0.0.1:3001', 
     changeOrigin: true,
     pathRewrite: {
-        '^/api/products': '/products' // Menulis ulang path /api/products menjadi /products saat diteruskan
+        '^/api/products': '/products' // Tulis ulang URL ke backend
     }
 }));
 
 // Konfigurasi Proxy untuk Order Service (berjalan di port 3002)
-app.use('/api/orders', createProxyMiddleware({ 
-    target: '[http://127.0.0.1:3002](http://127.0.0.1:3002)', 
+app.use(createProxyMiddleware({ 
+    pathFilter: '/api/orders', // <--- Penanda rute di versi terbaru
+    target: 'http://127.0.0.1:3002', 
     changeOrigin: true,
     pathRewrite: {
-        '^/api/orders': '/orders'
+        '^/api/orders': '/orders' // Tulis ulang URL ke backend
     }
 }));
+
+app.get('/', (req, res) => {
+    res.json({ message: "API Gateway Aktif. Kunjungi /api-docs untuk dokumentasi." });
+});
 
 // Menjalankan server API Gateway
 app.listen(PORT, () => {

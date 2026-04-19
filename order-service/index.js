@@ -74,6 +74,41 @@ app.post('/orders', async (req, res) => {
     }
 });
 
+// DELETE: Membatalkan pesanan dan MENGEMBALIKAN stok (Inter-service Communication)
+app.delete('/orders/:id', async (req, res) => {
+    try {
+        // 1. Cari data pesanan yang ingin dihapus
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ error: 'Pesanan tidak ditemukan' });
+
+        // 2. Hubungi Product Service untuk mengembalikan stok
+        try {
+            // Ambil data produk terbaru
+            const productResponse = await axios.get(`http://127.0.0.1:3001/products/${order.productId}`);
+            const product = productResponse.data;
+
+            // Tambahkan stok saat ini dengan kuantitas yang dibatalkan
+            const restoredStock = product.stock + order.quantity;
+
+            // Kirim instruksi update stok ke Product Service
+            await axios.put(`http://127.0.0.1:3001/products/${order.productId}`, {
+                name: product.name,
+                price: product.price,
+                stock: restoredStock
+            });
+        } catch (productError) {
+            console.error('[Warning] Gagal mengembalikan stok, mungkin produk sudah dihapus dari katalog.');
+        }
+
+        // 3. Hapus pesanan dari database order_db
+        await Order.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: 'Pesanan berhasil dibatalkan dan stok telah dikembalikan!' });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Gagal membatalkan pesanan', details: error.message });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`[Order Service] Berjalan di port ${PORT}`);
 });
