@@ -4,15 +4,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const User = require('./models/User');
+require('dotenv').config();
 
 const app = express();
-const PORT = 3003;
-const JWT_SECRET = 'RAHASIA_NEGARA_123'; // Dalam produksi, gunakan .env
+const JWT_SECRET = process.env.JWT_SECRET;
+const PORT = process.env.PORT || 3003;
 
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect('mongodb://127.0.0.1:27017/user_db')
+mongoose.connect('process.env.MONGO_URI')
     .then(() => console.log('[User Service] Terhubung ke MongoDB (user_db)'))
     .catch(err => console.error(err));
 

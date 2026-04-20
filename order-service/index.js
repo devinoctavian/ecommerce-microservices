@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const axios = require('axios'); // Digunakan untuk komunikasi HTTP antar microservice
 const cors = require('cors');
 const Order = require('./models/Order');
+require('dotenv').config();
 
 const app = express();
 const PORT = 3002;
@@ -11,11 +12,11 @@ app.use(express.json());
 app.use(cors());
 
 // Koneksi ke Database MongoDB untuk Order
-mongoose.connect('mongodb://127.0.0.1:27017/order_db', {
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('[Order Service] Terhubung ke MongoDB (order_db)'))
-  .catch(err => console.error('[Order Service] Gagal terhubung ke MongoDB:', err));
+.catch(err => console.error('[Order Service] Gagal terhubung ke MongoDB:', err));
 
 // --- Endpoint Pesanan ---
 
@@ -46,7 +47,7 @@ app.post('/orders', async (req, res) => {
 
     try {
         // 1. Panggil Product Service secara internal untuk memverifikasi produk dan stok
-        const productResponse = await axios.get(`http://127.0.0.1:3001/products/${productId}`);
+        const productResponse = await axios.get(`${process.env.PRODUCT_SERVICE_URL}/products/${productId}`);
         const product = productResponse.data;
 
         // 2. Validasi Ketersediaan Stok
@@ -59,7 +60,7 @@ app.post('/orders', async (req, res) => {
 
         // 4. Kurangi Stok di Product Service melalui PUT request
         const updatedStock = product.stock - quantity;
-        await axios.put(`http://127.0.0.1:3001/products/${productId}`, {
+        await axios.put(`${process.env.PRODUCT_SERVICE_URL}/products/${productId}`, {
             name: product.name,
             price: product.price,
             stock: updatedStock

@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Product = require('./models/product');
+require('dotenv').config();
 
 const app = express();
 const PORT = 3001;
@@ -11,7 +12,7 @@ app.use(express.json()); // Parsing strict JSON
 app.use(cors());
 
 // Koneksi ke Database MongoDB untuk Product
-mongoose.connect('mongodb://127.0.0.1:27017/product_db', {
+mongoose.connect('process.env.MONGO_URI', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('[Product Service] Terhubung ke MongoDB (product_db)'))

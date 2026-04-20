@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'RAHASIA_NEGARA_123'; 
+const JWT_SECRET = process.env.JWT_SECRET;
+require('dotenv').config();
 
 const verifyToken = (req, res, next) => {
     // 1. TAMBAHKAN PENGECUALIAN DI SINI
