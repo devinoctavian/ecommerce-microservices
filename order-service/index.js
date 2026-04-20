@@ -21,17 +21,28 @@ mongoose.connect('mongodb://127.0.0.1:27017/order_db', {
 
 // GET: Mendapatkan semua riwayat pesanan
 app.get('/orders', async (req, res) => {
+    const userId = req.headers['x-user-id'];
+    const role = req.headers['x-user-role'];
+
     try {
-        const orders = await Order.find().sort({ createdAt: -1 });
+        let orders;
+        if (role === 'admin') {
+            // Admin bisa lihat semua pesanan
+            orders = await Order.find().sort({ createdAt: -1 }); 
+        } else {
+            // Customer HANYA bisa lihat pesanannya sendiri
+            orders = await Order.find({ userId: userId }).sort({ createdAt: -1 }); 
+        }
         res.status(200).json(orders);
     } catch (error) {
-        res.status(500).json({ error: 'Gagal mengambil pesanan', details: error.message });
+        res.status(500).json({ error: 'Gagal mengambil pesanan' });
     }
 });
 
 // POST: Membuat Pesanan Baru (Melibatkan Inter-Service Communication)
 app.post('/orders', async (req, res) => {
     const { productId, quantity } = req.body;
+    const userId = req.headers['x-user-id'];
 
     try {
         // 1. Panggil Product Service secara internal untuk memverifikasi produk dan stok
@@ -56,6 +67,7 @@ app.post('/orders', async (req, res) => {
 
         // 5. Simpan Data Pesanan ke Database Order
         const newOrder = new Order({
+            userId: userId,
             productId: product._id,
             productName: product.name,
             quantity: quantity,

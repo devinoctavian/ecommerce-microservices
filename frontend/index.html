@@ -5,68 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Commerce Microservices Demo</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        h1, h2 { color: #333; }
-        .container { display: flex; gap: 20px; }
-        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 50%; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 30px; background-color: #f4f4f9; }
+        h1, h2, h3 { color: #333; margin-top: 0; }
+        
+        /* Pengaturan Flexbox Utama */
+        .container { display: flex; gap: 20px; align-items: flex-start; }
+        
+        /* Desain Box Universal */
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
+        /* Box di dalam container (Katalog & Riwayat) membagi lebar layar sama rata */
+        .container .box { flex: 1; width: 100%; }
+        
+        /* Desain Khusus Form Login (Di tengah layar) */
+        #loginSection { max-width: 400px; margin: 50px auto; width: 100%; text-align: center; }
+        #loginSection input { width: 90%; margin-bottom: 15px; }
+        
+        /* Info User Navbar */
+        #userInfo { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Desain Tabel & Input */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #007bff; color: white; }
-        button { background-color: #28a745; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        button { background-color: #28a745; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #218838; }
-        form { margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 15px; }
-        input { padding: 5px; margin-right: 5px; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        form input { padding: 8px; margin-right: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        /* Styling Header */
+        .page-header { margin-bottom: 30px; text-align: center; }
+        .page-header p { color: #666; }
     </style>
 </head>
 <body>
 
-    <h1>E-Commerce Dashboard</h1>
-    <p>Terhubung melalui API Gateway (Port 3000)</p>
+    <div class="page-header">
+        <h1>E-Commerce Dashboard</h1>
+        <p>Terhubung melalui API Gateway (Port 3000) dengan Autentikasi JWT</p>
+    </div>
 
-    <div class="container">
-        <!-- Section Product -->
-        <div class="box">
-            <h2>Katalog Produk</h2>
-            <form id="addProductForm">
-                <h3>Tambah Produk (Admin)</h3>
-                <input type="text" id="pName" placeholder="Nama Produk" required>
-                <input type="number" id="pPrice" placeholder="Harga" required>
-                <input type="number" id="pStock" placeholder="Stok" required>
-                <button type="submit" style="background-color: #007bff;">Tambah</button>
-            </form>
+    <div id="loginSection" class="box">
+        <h2>Login Sistem</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Silakan masuk untuk mengakses layanan.</p>
+        <form id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Alamat Email" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <br>
+            <button type="submit" style="background-color: #007bff; width: 95%;">Login</button>
+        </form>
+    </div>
 
-            <table id="productsTable">
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Harga</th>
-                        <th>Stok</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data Produk akan diisi oleh JS -->
-                </tbody>
-            </table>
+    <div id="dashboardSection" style="display: none; flex-direction: column;">
+        
+        <div id="userInfo">
+            <p style="margin: 0; color: #333; font-size: 16px;">
+                Status Login: <strong id="displayRole" style="text-transform: capitalize; color: #007bff; font-size: 18px;"></strong>
+            </p>
+            <button onclick="logout()" style="background-color: #dc3545;">Keluar / Logout</button>
         </div>
 
-        <!-- Section Order -->
-        <div class="box">
-            <h2>Riwayat Pesanan</h2>
-            <table id="ordersTable">
-                <thead>
-                    <tr>
-                        <th>ID Pesanan</th>
-                        <th>Produk</th>
-                        <th>Qty</th>
-                        <th>Total Harga</th>
-                        <th>Status</th>
-                        <th>Aksi</th> </tr>
-                </thead>
-                <tbody>
-                    <!-- Data Pesanan akan diisi oleh JS -->
-                </tbody>
-            </table>
+        <div class="container">
+            <div class="box">
+                <h2>Katalog Produk</h2>
+                
+                <form id="addProductForm" style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    <h3 style="font-size: 16px;">Tambah Produk Baru (Akses Admin)</h3>
+                    <input type="text" id="pName" placeholder="Nama Produk" required>
+                    <input type="number" id="pPrice" placeholder="Harga" required>
+                    <input type="number" id="pStock" placeholder="Stok" style="width: 80px;" required>
+                    <button type="submit" style="background-color: #007bff;">Tambah</button>
+                </form>
+
+                <table id="productsTable">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Harga</th>
+                            <th>Stok</th>
+                            <th style="width: 130px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="box">
+                <h2>Riwayat Pesanan</h2>
+                <table id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>ID Pesanan</th>
+                            <th>Produk</th>
+                            <th>Qty</th>
+                            <th>Total Harga</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

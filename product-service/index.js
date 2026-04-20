@@ -15,7 +15,23 @@ mongoose.connect('mongodb://127.0.0.1:27017/product_db', {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log('[Product Service] Terhubung ke MongoDB (product_db)'))
-  .catch(err => console.error('[Product Service] Gagal terhubung ke MongoDB:', err));
+    .catch(err => console.error('[Product Service] Gagal terhubung ke MongoDB:', err));
+
+app.post('/products', async (req, res) => {
+    // PROTEKSI ROLE
+    const role = req.headers['x-user-role'];
+    if (role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: Hanya Admin yang dapat menambah produk' });
+    }
+
+    try {
+        const product = new Product(req.body);
+        await product.save();
+        res.status(201).json({ message: 'Produk berhasil dibuat', data: product });
+    } catch (error) {
+        res.status(500).json({ error: 'Gagal membuat produk' });
+    }
+});
 
 // --- Endpoint CRUD Produk ---
 

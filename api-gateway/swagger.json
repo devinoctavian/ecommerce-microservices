@@ -2,25 +2,108 @@
   "openapi": "3.0.0",
   "info": {
     "title": "E-Commerce Microservices API",
-    "version": "1.0.0",
-    "description": "Dokumentasi API terpusat untuk sistem Microservice E-Commerce (Product & Order Services)."
+    "version": "2.0.0",
+    "description": "Dokumentasi API terpusat untuk sistem Microservice E-Commerce dengan Autentikasi JWT (User, Product, & Order Services)."
   },
   "servers": [
     {
-      "url": "[http://127.0.0.1:3000](http://127.0.0.1:3000)",
+      "url": "http://127.0.0.1:3000",
       "description": "API Gateway Server"
     }
   ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Masukkan Token JWT yang didapatkan dari proses Login."
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth", "description": "Layanan Manajemen Pengguna dan Token" },
+    { "name": "Products", "description": "Layanan Katalog Produk" },
+    { "name": "Orders", "description": "Layanan Manajemen Pesanan" }
+  ],
   "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Mendaftarkan pengguna baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "Budi Admin" },
+                  "email": { "type": "string", "example": "admin@budi.com" },
+                  "password": { "type": "string", "example": "rahasia123" },
+                  "role": { "type": "string", "example": "admin" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registrasi berhasil" },
+          "400": { "description": "Email sudah digunakan" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login dan dapatkan token JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "example": "admin@budi.com" },
+                  "password": { "type": "string", "example": "rahasia123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login berhasil dan mengembalikan token" },
+          "401": { "description": "Password salah" },
+          "404": { "description": "User tidak ditemukan" }
+        }
+      }
+    },
+    "/auth/validate": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Cek validitas token JWT",
+        "security": [ { "bearerAuth": [] } ],
+        "responses": {
+          "200": { "description": "Token valid" },
+          "401": { "description": "Token tidak ada" },
+          "403": { "description": "Token kadaluarsa / tidak valid" }
+        }
+      }
+    },
     "/api/products": {
       "get": {
+        "tags": ["Products"],
         "summary": "Mendapatkan semua produk",
+        "security": [ { "bearerAuth": [] } ],
         "responses": {
-          "200": { "description": "Daftar produk berhasil diambil" }
+          "200": { "description": "Daftar produk berhasil diambil" },
+          "401": { "description": "Akses ditolak: Token tidak ada" }
         }
       },
       "post": {
-        "summary": "Menambahkan produk baru",
+        "tags": ["Products"],
+        "summary": "Menambahkan produk baru (HANYA ADMIN)",
+        "security": [ { "bearerAuth": [] } ],
         "requestBody": {
           "required": true,
           "content": {
@@ -37,49 +120,37 @@
           }
         },
         "responses": {
-          "201": { "description": "Produk berhasil ditambahkan" }
+          "201": { "description": "Produk berhasil ditambahkan" },
+          "403": { "description": "Forbidden: Hanya Admin yang dapat mengakses" }
         }
       }
     },
     "/api/products/{id}": {
-      "put": {
-        "summary": "Memperbarui produk berdasarkan ID",
-        "parameters": [
-          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "price": { "type": "number" },
-                  "stock": { "type": "number" }
-                }
-              }
-            }
-          }
-        },
-        "responses": { "200": { "description": "Produk berhasil diperbarui" } }
-      },
       "delete": {
-        "summary": "Menghapus produk berdasarkan ID",
+        "tags": ["Products"],
+        "summary": "Menghapus produk berdasarkan ID (HANYA ADMIN)",
+        "security": [ { "bearerAuth": [] } ],
         "parameters": [
           { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
         ],
-        "responses": { "200": { "description": "Produk berhasil dihapus" } }
+        "responses": {
+          "200": { "description": "Produk berhasil dihapus" },
+          "403": { "description": "Forbidden: Hanya Admin" }
+        }
       }
     },
     "/api/orders": {
       "get": {
-        "summary": "Mendapatkan semua pesanan",
+        "tags": ["Orders"],
+        "summary": "Mendapatkan daftar pesanan",
+        "description": "Admin akan melihat semua pesanan. Customer HANYA melihat pesanannya sendiri.",
+        "security": [ { "bearerAuth": [] } ],
         "responses": { "200": { "description": "Daftar pesanan berhasil diambil" } }
       },
       "post": {
+        "tags": ["Orders"],
         "summary": "Membuat pesanan baru",
-        "description": "Layanan ini akan secara internal memeriksa ketersediaan stok di Product Service.",
+        "security": [ { "bearerAuth": [] } ],
         "requestBody": {
           "required": true,
           "content": {
@@ -87,8 +158,8 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "productId": { "type": "string", "example": "64abcd1234567890" },
-                  "quantity": { "type": "number", "example": 2 }
+                  "productId": { "type": "string", "example": "id_produk_disini" },
+                  "quantity": { "type": "number", "example": 1 }
                 }
               }
             }
@@ -96,7 +167,20 @@
         },
         "responses": {
           "201": { "description": "Pesanan berhasil dibuat" },
-          "400": { "description": "Stok tidak mencukupi atau produk tidak ditemukan" }
+          "400": { "description": "Stok tidak mencukupi" }
+        }
+      }
+    },
+    "/api/orders/{id}": {
+      "delete": {
+        "tags": ["Orders"],
+        "summary": "Membatalkan pesanan dan mengembalikan stok",
+        "security": [ { "bearerAuth": [] } ],
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Pesanan dibatalkan, stok dikembalikan" }
         }
       }
     }
