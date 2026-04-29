@@ -1,11 +1,11 @@
 // Mengimpor library yang dibutuhkan
+require('dotenv').config();
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
 const fs = require('fs');
 const verifyToken = require('./middlewares/authMiddleware');
-require('dotenv').config();
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -34,15 +34,14 @@ const onProxyReqInjectHeaders = (proxyReq, req, res) => {
 // Proxy User Service
 app.use(createProxyMiddleware({ 
     pathFilter: '/auth', 
-    target: 'process.env.USER_SERVICE_URL', 
+    target: process.env.USER_SERVICE_URL, 
     changeOrigin: true 
 }));
 
 // Konfigurasi Proxy untuk Product Service (berjalan di port 3001)
-// Catatan: Kita tidak menggunakan express.json() di Gateway agar proxy bisa meneruskan body raw dengan benar
 app.use(createProxyMiddleware({ 
     pathFilter: '/api/products', 
-    target: 'process.env.PRODUCT_SERVICE_URL', 
+    target: process.env.PRODUCT_SERVICE_URL, 
     changeOrigin: true,
     pathRewrite: { '^/api/products': '/products' },
     onProxyReq: onProxyReqInjectHeaders
@@ -51,7 +50,7 @@ app.use(createProxyMiddleware({
 // Konfigurasi Proxy untuk Order Service (berjalan di port 3002)
 app.use(createProxyMiddleware({ 
     pathFilter: '/api/orders', 
-    target: 'process.env.ORDER_SERVICE_URL', 
+    target: process.env.ORDER_SERVICE_URL, 
     changeOrigin: true,
     pathRewrite: { '^/api/orders': '/orders' },
     onProxyReq: onProxyReqInjectHeaders

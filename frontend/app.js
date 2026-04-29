@@ -1,8 +1,8 @@
-// URL API Gateway sebagai satu-satunya titik masuk (Single Entry Point)
+// URL API Gateway (Single Entry Point)
 const API_URL = 'http://127.0.0.1:3000/api';
 const AUTH_URL = 'http://127.0.0.1:3000/auth';
 
-// Fungsi Pembantu: Mengambil token untuk Headers
+// Mengambil token untuk Headers
 const getAuthHeaders = () => {
     const token = localStorage.getItem('jwt_token');
     return {
@@ -34,7 +34,6 @@ async function handleResponse(response) {
 }
 
 // Handle Login
-// Handle form login (Super Debugger Version)
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
@@ -52,11 +51,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         console.log("2. Gateway merespons dengan HTTP Status:", response.status);
 
-        // Ambil data sebagai teks mentah dulu agar ketahuan jika errornya berupa HTML (bukan JSON)
+        
         const textData = await response.text(); 
         console.log("3. Isi balasan mentah dari server:", textData);
 
-        // Coba ubah teks menjadi JSON
+        
         let resultData;
         try {
             resultData = JSON.parse(textData);
@@ -90,7 +89,7 @@ function checkAuthAndRender() {
         document.getElementById('loginSection').style.display = 'none';
         document.getElementById('dashboardSection').style.display = 'flex';
 
-        // --- BARU: Tampilkan tulisan Role (Admin / Customer) ---
+        // Tampilkan tulisan Role (Admin / Customer) 
         const displayRoleElement = document.getElementById('displayRole');
         if (displayRoleElement) {
             displayRoleElement.innerText = role;
@@ -107,8 +106,6 @@ function checkAuthAndRender() {
         fetchProducts();
         fetchOrders();
     } else {
-        // KONDISI: PENGGUNA SUDAH LOGOUT / TIDAK ADA TOKEN
-        // Pastikan Login muncul dan Dashboard hilang
         document.getElementById('loginSection').style.display = 'block';
         document.getElementById('dashboardSection').style.display = 'none';
         
@@ -129,7 +126,7 @@ function logout() {
     location.reload(); 
 }
 
-// 1. Fungsi HANYA untuk mengambil (GET) dan menampilkan daftar produk
+// Fungsi HANYA untuk mengambil (GET) dan menampilkan daftar produk
 async function fetchProducts() {
     try {
         const response = await fetch(`${API_URL}/products`, {
@@ -146,21 +143,35 @@ async function fetchProducts() {
         
         products.forEach(product => {
             const tr = document.createElement('tr');
-            const deleteBtnHtml = userRole === 'admin'
-            ? `<button onclick="deleteProduct('${product._id}')" style="background-color: #dc3545; margin-left: 5px;">Hapus</button>` 
-                : '';
+            
+            let actionHtml = '';
+            
+            if (userRole === 'admin') {
+                // Jika Admin: Munculkan tombol Edit dan Hapus, Beli dihilangkan
+                actionHtml = `
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="editProduct('${product._id}', '${product.name}', ${product.price}, ${product.stock})">Edit</button>
+                        <button class="btn-delete" onclick="deleteProduct('${product._id}')">Hapus</button>
+                    </div>
+                `;
+            } else {
+                // Jika Customer: Munculkan tombol Beli saja, dengan logika disable jika stok 0
+                actionHtml = `
+                    <div class="action-buttons">
+                        <button class="btn-buy" onclick="buyProduct('${product._id}')" ${product.stock === 0 ? 'disabled style="background:gray; cursor:not-allowed;"' : ''}>
+                            Beli (1)
+                        </button>
+                    </div>
+                `;
+            }
 
             tr.innerHTML = `
                 <td>${product.name}</td>
                 <td>Rp ${product.price.toLocaleString()}</td>
                 <td>${product.stock}</td>
-                <td>
-                    <button onclick="buyProduct('${product._id}')" ${product.stock === 0 ? 'disabled style="background:gray;"' : ''}>
-                        Beli (1)
-                    </button>
-                    ${deleteBtnHtml}
-                </td>
+                <td>${actionHtml}</td> 
             `;
+            
             tbody.appendChild(tr);
         });
     } catch (error) {
@@ -168,28 +179,47 @@ async function fetchProducts() {
     }
 }
 
-// 2. Fungsi untuk mengambil (GET) dan menampilkan riwayat pesanan
+// Fungsi untuk mengambil (GET) dan menampilkan riwayat pesanan
 async function fetchOrders() {
     try {
+        const token = localStorage.getItem('jwt_token');
         const response = await fetch(`${API_URL}/orders`, {
             method: 'GET',
-            headers: getAuthHeaders()
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
         });
         
-        const orders = await handleResponse(response);
-        if (!orders) return;    
+        const responseData = await handleResponse(response);
+        if (!responseData) return;    
+
+        console.log("ISI PAKET DARI BACKEND:", responseData);
+
+        const ordersArray = Array.isArray(responseData) ? responseData : responseData.data;
         
-        const tbody = document.querySelector('#ordersTable tbody');
+        const tbody = document.querySelector('#ordersTable tbody') || document.querySelectorAll('table')[1].querySelector('tbody');        
         tbody.innerHTML = '';
+
+        // Jika riwayat pesanan kosong
+        if (!ordersArray || ordersArray.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Belum ada pesanan.</td></tr>';
+            return;
+        }
         
-        orders.forEach(order => {
+        ordersArray.forEach(order => {
             const tr = document.createElement('tr');
+            const shortId = order._id.substring(order._id.length - 8);
+
+            const displayProduct = order.productName || order.productId || 'Produk Tidak Diketahui';
+            const displayStatus = order.status || 'Berhasil';
+
             tr.innerHTML = `
-                <td><small>${order._id}</small></td>
-                <td>${order.productName}</td>
+                <td><small>${shortId}</small></td>
+                <td>${displayProduct}</td>
                 <td>${order.quantity}</td>
-                <td>Rp ${order.totalPrice.toLocaleString()}</td>
-                <td><span style="color: green; font-weight: bold;">${order.status}</span></td>
+                <td>Rp ${(order.totalPrice || 0).toLocaleString()}</td>
+                <td><span style="color: green; font-weight: bold;">${displayStatus}</span></td>
                 <td>
                     <button onclick="cancelOrder('${order._id}')" style="background-color: #dc3545; padding: 4px 8px; font-size: 12px;">
                         Batalkan
@@ -203,7 +233,7 @@ async function fetchOrders() {
     }
 }
 
-// 3. Fungsi terpisah untuk membuat produk baru (POST) saat Form di-submit
+// Fungsi terpisah untuk membuat produk baru (POST) saat Form di-submit
 document.getElementById('addProductForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -213,9 +243,14 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
     const stock = parseInt(document.getElementById('pStock').value);
 
     try {
+        const token = localStorage.getItem('jwt_token');
+
         const response = await fetch(`${API_URL}/products`, {
             method: 'POST',
-            headers: getAuthHeaders(),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify({ name, price, stock })
         });
         
@@ -231,7 +266,7 @@ document.getElementById('addProductForm').addEventListener('submit', async (e) =
     }
 });
 
-// 4. Fungsi untuk mensimulasikan pembelian produk (POST Order)
+// Fungsi untuk mensimulasikan pembelian produk (POST Order)
 async function buyProduct(productId) {
     try {
         const response = await fetch(`${API_URL}/orders`, {
@@ -248,6 +283,46 @@ async function buyProduct(productId) {
         }
     } catch (error) {
         console.error('Error saat membeli:', error);
+    }
+}
+
+// Fitur EDIT PRODUK (Hanya Admin)
+async function editProduct(id, currentName, currentPrice, currentStock) {
+    // Meminta input baru dari admin, dengan nilai lama sebagai default
+    const newName = prompt("Edit Nama Produk:", currentName);
+    if (newName === null) return; // Batal ditekan
+    
+    const newPrice = prompt("Edit Harga Produk:", currentPrice);
+    if (newPrice === null) return;
+
+    const newStock = prompt("Edit Stok Produk:", currentStock);
+    if (newStock === null) return;
+
+    const token = localStorage.getItem('jwt_token');
+
+    try {
+        const response = await fetch(`${API_URL}/products/${id}`, {
+            method: 'PUT', // Menggunakan metode PUT untuk update
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` // Wajib bawa token admin!
+            },
+            body: JSON.stringify({ 
+                name: newName, 
+                price: parseInt(newPrice), 
+                stock: parseInt(newStock) 
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Gagal mengupdate produk');
+        }
+
+        alert('Produk berhasil diupdate!');
+        fetchProducts(); // Refresh tabel agar data baru langsung muncul
+    } catch (error) {
+        alert('Error: ' + error.message);
     }
 }
 
@@ -275,7 +350,7 @@ async function deleteProduct(productId) {
     }
 }
 
-// 5. Inisialisasi awal saat halaman pertama kali dimuat
+// Inisialisasi awal saat halaman pertama kali dimuat
 window.onload = () => {
     checkAuthAndRender();
 };

@@ -126,16 +126,124 @@
       }
     },
     "/api/products/{id}": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Mendapatkan detail produk berdasarkan ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID Produk yang ingin dicari",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail produk berhasil ditemukan"
+          },
+          "404": {
+            "description": "Produk tidak ditemukan"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Products"],
+        "summary": "Memperbarui data produk (HANYA ADMIN)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID Produk yang ingin diedit",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Iphone 16 Pro Max"
+                  },
+                  "price": {
+                    "type": "number",
+                    "example": 25000000
+                  },
+                  "stock": {
+                    "type": "number",
+                    "example": 10
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produk berhasil diperbarui"
+          },
+          "401": {
+            "description": "Akses ditolak: Token tidak ada/tidak valid"
+          },
+          "403": {
+            "description": "Forbidden: Hanya Admin yang dapat mengedit produk"
+          },
+          "404": {
+            "description": "Produk tidak ditemukan"
+          }
+        }
+      },
       "delete": {
         "tags": ["Products"],
         "summary": "Menghapus produk berdasarkan ID (HANYA ADMIN)",
-        "security": [ { "bearerAuth": [] } ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
-          { "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID Produk yang ingin dihapus",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
         "responses": {
-          "200": { "description": "Produk berhasil dihapus" },
-          "403": { "description": "Forbidden: Hanya Admin" }
+          "200": {
+            "description": "Produk berhasil dihapus"
+          },
+          "401": {
+            "description": "Akses ditolak: Token tidak ada/tidak valid"
+          },
+          "403": {
+            "description": "Forbidden: Hanya Admin yang dapat menghapus produk"
+          },
+          "404": {
+            "description": "Produk tidak ditemukan"
+          }
         }
       }
     },

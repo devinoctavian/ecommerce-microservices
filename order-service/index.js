@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const axios = require('axios'); // Digunakan untuk komunikasi HTTP antar microservice
 const cors = require('cors');
 const Order = require('./models/Order');
-require('dotenv').config();
+
 
 const app = express();
 const PORT = 3002;
@@ -22,10 +23,21 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // GET: Mendapatkan semua riwayat pesanan
 app.get('/orders', async (req, res) => {
-    const userId = req.headers['x-user-id'];
-    const role = req.headers['x-user-role'];
-
     try {
+        // Ambil dan bedah token dari header Authorization
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+
+        if (!token) {
+            return res.status(401).json({ error: 'Akses ditolak: Token tidak ada' });
+        }
+
+        // Ekstrak data User ID dan Role dari dalam token
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        const userId = payload.id;
+        const role = payload.role;
+
+        // Logika Role-Based Access Control
         let orders;
         if (role === 'admin') {
             // Admin bisa lihat semua pesanan
@@ -34,9 +46,11 @@ app.get('/orders', async (req, res) => {
             // Customer HANYA bisa lihat pesanannya sendiri
             orders = await Order.find({ userId: userId }).sort({ createdAt: -1 }); 
         }
-        res.status(200).json(orders);
+        
+        res.status(200).json({ data: orders });
     } catch (error) {
-        res.status(500).json({ error: 'Gagal mengambil pesanan' });
+        console.error("Error mengambil pesanan:", error);
+        res.status(500).json({ error: 'Gagal mengambil data pesanan' });
     }
 });
 
@@ -46,6 +60,18 @@ app.post('/orders', async (req, res) => {
     const userId = req.headers['x-user-id'];
 
     try {
+
+        // Ekstrak ID User dari Token JWT yang dikirim Frontend
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1];
+        
+        if (!token) {
+            return res.status(401).json({ error: 'Akses ditolak: Token tidak ada' });
+        }
+
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        const pembeliId = payload.id;
+
         // 1. Panggil Product Service secara internal untuk memverifikasi produk dan stok
         const productResponse = await axios.get(`${process.env.PRODUCT_SERVICE_URL}/products/${productId}`);
         const product = productResponse.data;
@@ -68,7 +94,7 @@ app.post('/orders', async (req, res) => {
 
         // 5. Simpan Data Pesanan ke Database Order
         const newOrder = new Order({
-            userId: userId,
+            userId: pembeliId,
             productId: product._id,
             productName: product.name,
             quantity: quantity,
@@ -79,6 +105,9 @@ app.post('/orders', async (req, res) => {
         res.status(201).json({ message: 'Pesanan berhasil dibuat!', data: newOrder });
 
     } catch (error) {
+
+        console.error("Pesan Error Utama:", error.message);
+
         // Penanganan error khusus jika produk tidak ditemukan di Product Service (Axios 404 error)
         if (error.response && error.response.status === 404) {
             return res.status(404).json({ error: 'Produk tidak ditemukan di database.' });
@@ -104,7 +133,7 @@ app.delete('/orders/:id', async (req, res) => {
             const restoredStock = product.stock + order.quantity;
 
             // Kirim instruksi update stok ke Product Service
-            await axios.put(`http://127.0.0.1:3001/products/${order.productId}`, {
+            await axios.put('http://127.0.0.1:3001/products/${order.productId}', {
                 name: product.name,
                 price: product.price,
                 stock: restoredStock

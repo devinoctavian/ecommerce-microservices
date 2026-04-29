@@ -1,9 +1,8 @@
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
-require('dotenv').config();
 
 const verifyToken = (req, res, next) => {
-    // 1. TAMBAHKAN PENGECUALIAN DI SINI
     // Lewati pengecekan untuk endpoint login/register, halaman swagger, dan root
     if (
         req.path.startsWith('/auth/') || 
@@ -13,7 +12,7 @@ const verifyToken = (req, res, next) => {
         return next();
     }
 
-    // 2. Pengecekan Token untuk rute lainnya (Products & Orders)
+    // Pengecekan Token untuk rute lainnya (Products & Orders)
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer <token>
 

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Definisi skema (schema) untuk Koleksi Pesanan di MongoDB
+// Definisi schema untuk Koleksi Pesanan di MongoDB
 const orderSchema = new mongoose.Schema({
     userId: { type: String, required: true },
     productId: { type: String, required: true },

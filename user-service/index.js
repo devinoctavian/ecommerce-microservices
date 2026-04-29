@@ -1,10 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const User = require('./models/User');
-require('dotenv').config();
 
 const app = express();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3003;
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect('process.env.MONGO_URI')
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('[User Service] Terhubung ke MongoDB (user_db)'))
     .catch(err => console.error(err));
 
@@ -52,8 +52,8 @@ app.post('/auth/login', async (req, res) => {
         // Buat Token JWT yang berisi ID dan Role
         const token = jwt.sign(
             { id: user._id, role: user.role }, 
-            JWT_SECRET, 
-            { expiresIn: '1h' }
+            process.env.JWT_SECRET, 
+            { expiresIn: '1d' }
         );
 
         res.status(200).json({ message: 'Login berhasil', token, role: user.role });

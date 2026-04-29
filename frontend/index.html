@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Commerce Microservices Demo</title>
+    <title>E-Commerce Microservices</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 30px; background-color: #f4f4f9; }
         h1, h2, h3 { color: #333; margin-top: 0; }
@@ -24,6 +24,22 @@
         /* Info User Navbar */
         #userInfo { background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
         
+        /* Tambahkan gaya ini di dalam <style> */
+            .action-buttons {
+            display: flex;
+            gap: 8px; /* Memberi jarak antar tombol */
+            justify-content: flex-start;
+        }
+
+        .btn-edit { background-color: #ffc107; color: #000; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-delete { background-color: #dc3545; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .btn-buy { background-color: #28a745; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+
+        /* Sedikit efek hover agar tombol lebih interaktif */
+        .btn-edit:hover { background-color: #e0a800; }
+        .btn-delete:hover { background-color: #c82333; }
+        .btn-buy:hover { background-color: #218838; }
+
         /* Desain Tabel & Input */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
